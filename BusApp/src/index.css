@@ -1,0 +1,276 @@
+body{
+  background-image: url("./images/mybus.jpeg");
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+nav{
+  background-color: white ;
+  width: 0;
+}
+.seats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  /* Create two columns for each seat group */
+  gap: 10px;
+  /* Adjust the gap between the seat groups */
+  width: 40%;
+  
+
+  /* Adjust the width as needed */
+  margin: 0 auto;
+
+  /* Center the grid on the page, adjust as needed */
+}
+
+.steering-wheel-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  /* Adjust the width as needed */
+  height: 50px;
+  /* Adjust the height as needed */
+  background-color: lightgray;
+  /* Adjust the background color as needed */
+  border-radius: 50%;
+  /* This will make it a circle, adjust as needed */
+  font-size: 24px;
+  /* Adjust the font size as needed */
+  margin-right: 10px;
+  /* Adjust the margin as needed */
+}
+
+/* Add a custom class for the seat rows */
+.seat-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  
+}
+
+/* Add a gap between the first two seats and the last two seats in a row */
+
+.seat-row .seat:nth-child(2) {
+  margin-right: 3rem;
+  /* Adjust the value as needed for the desired gap */
+}
+.seat {
+
+   text-align: center;
+    background-color: lightgray;
+    font-size: 1rem;
+    font-weight: bolder;
+    padding: 1rem;
+  margin: 0;
+    border-radius: 0.5rem;
+    color:black;
+  
+    
+   
+}
+.seat:hover{
+  cursor: pointer;
+  box-shadow: 0 0 0px 2px green;
+}
+
+
+.selected {
+    background-color: green;
+}
+
+.available {
+    background-color: lightgray;
+}
+
+
+.map-container {
+  width: 100%;
+  height: 100vh;
+}
+.map-info {
+  position: absolute;
+  top: 3rem;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  z-index: 1;
+}
+
+/* CreateBusForm.css */
+.time-picker-input {
+   /* Set the desired font size for the TimePicker input */
+  padding: 10px; /* Adjust the padding as needed */
+  width: 180px; /* Adjust the width as needed */
+  
+}
+.Home {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 20rem auto;
+  justify-content: center;
+  align-content: center;
+  margin-top: 3rem;
+  
+ 
+}
+.employee{
+  background-color: darkcyan;
+}
+.routes{
+  color: aliceblue;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.5));
+}
+.emp{
+  margin: 3rem;
+}
+.emp input{
+  width: 6rem;
+  border: none;
+}
+.below{
+margin-top: 3rem;
+}
+.button{
+  margin-top: 3rem;
+  margin-left: 1.2rem;
+  width: 10rem;
+}
+.btn {
+ border-radius: 2rem;
+ border: none;
+width: 7rem;
+
+
+}
+.mybtn{
+display: flex;
+justify-content: end;
+margin-right: 3rem;
+margin-top: 3rem;
+}
+.js{
+  text-decoration: none;
+
+}
+@media screen and (max-width:600px) {
+  .Home{
+    display: flex;
+    flex-direction: column;
+  }
+}
+.booking {
+  display: flex;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: white;
+}
+.bg{
+background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.5));
+width: 100%;
+margin-top: 0;
+border-radius: 2rem;
+border: none;
+}
+.booking button{
+  margin-top: 3rem;
+  border: none;
+  font-size: 1.2rem;
+  border-radius: 1rem;
+}
+.booking button:hover {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+.booking input {
+  border: none;
+  border-radius: 1rem;
+  height: 1.5rem;
+}
+.booked {
+  display: flex;
+  height: auto;
+  justify-content: center;
+  font-size: 1.2rem;
+  
+  color: white;
+}
+.booked button {
+  
+  border: none;
+  font-size: 1.2rem;
+  border-radius: 0.5rem;
+}
+
+.booked button:hover {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+.cnt {
+  margin-left: 3rem;
+}
+.update {
+  display: flex;
+    
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+.update button{
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+    border: none;
+    font-size: 1.2rem;
+    border-radius: 1rem;
+}
+.update button:hover{
+  background-color: black;
+    color: white;
+    cursor: pointer;
+}
+
+.createbs{
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+    border: none;
+    font-size: 1.2rem;
+    
+}
+.pay{
+  display: flex;
+    height: auto;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+.pay input{
+  margin-bottom: 2rem;
+  border: none;
+}
+.pay button {
+  border: none;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    width: 13rem;
+}
+.pay button:hover{
+  background-color: black;
+    color: white;
+    cursor: pointer;
+}
+.mpesa {
+  
+    margin: auto;
+    margin-left: 3rem;
+}
+.mpesa button:hover{
+  background-color: black;
+    color: white;
+    cursor: pointer;
+}
