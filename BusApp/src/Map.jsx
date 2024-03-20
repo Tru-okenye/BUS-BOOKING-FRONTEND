@@ -384,5 +384,3 @@ const calculateRoute = async (origin, destination) => {
     </div>
   );
 };
-
-

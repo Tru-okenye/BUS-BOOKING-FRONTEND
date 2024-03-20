@@ -7,11 +7,11 @@ import { useGlobalContext } from './Context';
  
 
 
-const Seats = () => {
+const Sadmin = () => {
   const { totalSeats } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { amount, selectedBus, busId } = location.state || {};
+  const { amount, selectedBus, busId, employee } = location.state || {};
  const { bookedSeats, setBookedSeats, selectedSeats, setSelectedSeats } = useGlobalContext()
   console.log('Total Seats:', totalSeats);
   console.log(amount);
@@ -22,6 +22,7 @@ const Seats = () => {
     // This effect runs when the component mounts
     // Reset selected seats when navigating back to this page
     setSelectedSeats({});
+
   }, []);
   
   useEffect(() => {
@@ -85,8 +86,6 @@ const Seats = () => {
       return bookedSeatsForSelectedBus.includes(String(seatNumber));
     };
     
-  
-
     const renderSeats = () => {
       const seats = Array.from({ length: totalSeats }, (_, index) => index + 1);
       console.log('Seats Array:', seats);
@@ -204,6 +203,7 @@ const Seats = () => {
       return seatRows;
     };
     
+    
 
   
 // const selectedSeatsAmount = selectedSeats.length * parseInt(amount, 10);
@@ -243,6 +243,7 @@ const selectedSeatsAmount = Object.values(selectedSeats).reduce((totalAmount, se
         driverNoPlate: NoPlate,
         // Add any other relevant data to be passed to PaymentDetails
         busId: busId,
+        employee,
       },
 
     });
@@ -250,11 +251,9 @@ const selectedSeatsAmount = Object.values(selectedSeats).reduce((totalAmount, se
   };
 
 
-
-
-  
   return (
     <div className='myseats'>
+    
       <h2>Select a Seat</h2>
       <p>Selected Seats: {Object.values(selectedSeats[busId] || []).flat().join(', ')}</p>
 
@@ -306,19 +305,10 @@ const selectedSeatsAmount = Object.values(selectedSeats).reduce((totalAmount, se
 >
         Payment Details
       </button>
-<div className='seatmap'>
 
-      <Map
-        origin={selectedBus.from}
-        destination={selectedBus.to}
-        driverName={Driver}
-        numberPlate={NoPlate}
-        PhoneNo={PhoneNo}
-        selectedSeats={selectedSeats}
-      />
-</div>
+
     </div>
   );
 };
 
-export default Seats;
+export default Sadmin;

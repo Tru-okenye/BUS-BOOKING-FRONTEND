@@ -38,9 +38,11 @@ const styles = StyleSheet.create({
   },
 });
 
-const MyTcket = ({ paymentDetails }) => {
-  const { name, phone, from, to, seats, time, date, amount } = paymentDetails;
-
+const MyTcket = ({ paymentDetails, ticketNumber, employee }) => {
+  const { name, phone, from, to, seats, time, date, amount  } = paymentDetails;
+  const bookedSeats = Array.isArray(seats)
+  ? seats
+  :  Object.values(seats).flat();
   return (
     <>
     
@@ -49,13 +51,23 @@ const MyTcket = ({ paymentDetails }) => {
         <View style={styles.section}>
           <Text style={styles.header}>TICKET DETAILS</Text>
           <View>
+            <Text style={styles.content}>TicketNo: {ticketNumber}</Text>
             <Text style={styles.content}>Name: {name}</Text>
             <Text style={styles.content}>Phone: {phone}</Text>
             <Text style={styles.content}>From: {from}</Text>
             <Text style={styles.content}>To: {to}</Text>
             <Text style={styles.content}>Date: {date}</Text>
-            <Text style={styles.content}>Time: {time}hrs</Text>
-            <Text style={styles.content}>Selected Seat: {seats.join(', ')}</Text>
+            <Text style={styles.content}>Time: {time ? new Date(time).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true,
+          }) : 'N/A'}</Text>
+            <Text style={styles.content}>Booked Seat: {bookedSeats.join('')}</Text>
+            <Text style={styles.content}>Payment method: : MPESA</Text>
+            <Text style={styles.content}>{employee && `Booked by: ${employee}`}</Text>
+
+          
+            {/* <p>Booked Seats: {Object.values(Seats).flat().join(', ')}</p> */}
             <Text style={styles.content}>Total Amount Paid: Ksh {amount}</Text>
             <Text style={styles.footer}>Enjoy your ride !</Text>
           </View>

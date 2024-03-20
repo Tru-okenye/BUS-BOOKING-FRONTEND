@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Outbox from './Outbox';
 
 const Employee = () => {
+  const [employeeName, setEmployeeName] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -14,12 +15,12 @@ const navigate = useNavigate();
     e.preventDefault();
 
     try {
-      const response = await fetch('https://lets-ride-fe42d9bf40d4.herokuapp.com/api/employees/login', {
+      const response = await fetch('http://localhost:3000/api/employees/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ employee_id: employeeId, employee_number: employeeNumber }),
+        body: JSON.stringify({ employee_id: employeeId, employee_number: employeeNumber, employee_name: employeeName }),
       });
 
       const data = await response.json();
@@ -27,10 +28,10 @@ const navigate = useNavigate();
       if (response.ok) {
         // Login successful, redirect to the content page with buses
         // You can use the history object or a routing library like React Router for redirection
-        showAlert(true, 'success', 'Logged in successfully!');
+        // showAlert(true, 'success', 'Logged in successfully!');
 
-        navigate('/content')
-        console.log('Logged in successfully!', data.employee);
+        navigate('/content', { state: { employee: data.employee.employee_name } }); 
+        console.log('Logged in successfully!', data.employee.employee_name);
       } else {
         setErrorMessage(data.error);
       }
@@ -46,6 +47,15 @@ const navigate = useNavigate();
       <form onSubmit={handleLogin}>
         <div>
         {alert.show && <Outbox {...alert} removeAlert={showAlert} />}
+        <div className='above'>
+          <label htmlFor="employeeNumber">Emp Name:</label>
+          <input
+            type="text"
+            id="employeeName"
+            value={employeeName}
+            onChange={(e) => setEmployeeName(e.target.value)}
+          />
+        </div>
           <label htmlFor="employeeId">Employee ID:</label>
           <input
             type="text"

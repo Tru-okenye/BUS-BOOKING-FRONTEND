@@ -6,7 +6,7 @@ import { useGlobalContext } from './Context';
 
 const Booked = () => {
   const location = useLocation();
-  const { filteredBuses, origin, destination } = location.state || {};
+  const { filteredBuses, origin, destination, ticketNumber, updatedTicketDetails, Bookedseat } = location.state || {};
  
 
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const Booked = () => {
   }
 
   const handleSelectSeat = (bus) => {
-    navigate(`/seats/${bus.seats}`, {
+    navigate(`/reschedule/${bus.seats}`, {
       state: {
         selectedBus: {
           from: bus.from,
@@ -26,10 +26,13 @@ const Booked = () => {
           Driver: bus.driver_name,
           NoPlate: bus.number_plate,
           PhoneNo: bus.driver_phone_number,
-          
+          busId: bus.id,
         },
         amount: bus.amount,
-        busId: bus.id,
+        ticketBusId: updatedTicketDetails.data.bus_id,
+        ticketNumber: ticketNumber,
+        tcktDets: updatedTicketDetails.data,
+        Bookedseat,
 
       },
     });
@@ -56,12 +59,15 @@ const Booked = () => {
   
  console.log('currenttime', currentTime);
  console.log('currentDate', currentDate);
+ console.log("ticket details", updatedTicketDetails.data)
+ console.log("busid", updatedTicketDetails.data.bus_id)
   return (
     <>
       <div className='bg'>
         <div className='booked'>
-          <div className='ticketsearch'>
+          <div>
             <h2>Available Buses:</h2>
+          
             {filteredBuses.map((bus) => {
               const departureDate = parseDate(bus.date);
               const departureTime = parseTime(bus.time, departureDate);
@@ -80,7 +86,7 @@ const Booked = () => {
                   departureTime.getTime() > currentTime)
               ) {
                 return (
-                  <div key={bus.id} >
+                  <div key={bus.id} className=''>
                     <p>ID: {bus.id}</p>
                     <p>From: {bus.from}</p>
                     <p>To: {bus.to}</p>

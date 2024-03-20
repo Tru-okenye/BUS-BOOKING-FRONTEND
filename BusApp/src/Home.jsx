@@ -1,9 +1,13 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 
+
 const Home = () => {
+
+
   return (
     <>
+ 
     <nav>
     <ul>
       <li>

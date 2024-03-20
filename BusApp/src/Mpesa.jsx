@@ -1,13 +1,16 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Ticket from './Ticket';
+import { useGlobalContext } from './Context';
+import Cancelticket from './Ticketsearch';
 
 
 
 const checkPaymentStatus = async (checkoutRequestID, setPaymentStatus, setPaymentChecked, setErrorMessage) => {
   try {
-    const queryResponse = await fetch('https://lets-ride-fe42d9bf40d4.herokuapp.com/api/stkquery', {
+    const queryResponse = await fetch('http://127.0.0.1:3000/api/stkquery', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,6 +65,28 @@ const checkPaymentStatus = async (checkoutRequestID, setPaymentStatus, setPaymen
   }
 };
 
+const storeBookedSeats = async (busId, newBookedSeats) => {
+  try {
+    const response = await fetch(`http://127.0.0.1:3000/api/buses/${busId}/store_booked_seats`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // You may need to include authentication headers if required
+      },
+      body: JSON.stringify({ bookedSeats: newBookedSeats }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to store booked seats');
+    }
+
+    console.log('Booked seats stored successfully!');
+  } catch (error) {
+    console.error('Error storing booked seats:', error.message);
+  }
+};
+
+// Call this function when updating booked seats
 
 
 
@@ -69,15 +94,31 @@ const Mpesa = () => {
   const location = useLocation();
 const navigate = useNavigate();
 
-  const { paymentDetails } = location.state || {};
-   const { driverName, driverPhone, driverNoPlate } = location.state || {};
-
+  const { paymentDetails, employee } = location.state || {};
+  const { driverName, driverPhone, driverNoPlate } = location.state || {};
+ const { setBookedSeats, setSelectedSeats  } = useGlobalContext();
   const [paymentStatus, setPaymentStatus] = useState('');
   const [paymentChecked, setPaymentChecked] = useState(false);
-    const [checkoutRequestID, setCheckoutRequestID] = useState('');
+  const [checkoutRequestID, setCheckoutRequestID] = useState('');
+  const selectedSeats = paymentDetails.seats || [];
   const [errorMessage, setErrorMessage] = useState('');
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
-
+  const [ticketNumber, setTicketNumber] = useState('');
+  const [ticketStored, setTicketStored] = useState(false);
+  
+  const {
+    name,
+    phone,
+    from,
+    to,
+    seats,
+    time,
+    date,
+    amount,
+    email,
+    busId,
+  } = paymentDetails || {};
+ 
  const initiateSTKPush = async (phoneNumber) => {
   try {
        setPaymentStatus('');
@@ -85,7 +126,7 @@ const navigate = useNavigate();
       setErrorMessage('');
       setIsPaymentSuccessful(false);
       setCheckoutRequestID('');
-    const response = await fetch('https://lets-ride-fe42d9bf40d4.herokuapp.com/api/stkpush', {
+    const response = await fetch('http://127.0.0.1:3000/api/stkpush', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -102,7 +143,8 @@ const navigate = useNavigate();
 
       // Start polling for payment status
        checkPaymentStatus(checkoutRequestID, setPaymentStatus, setPaymentChecked, setErrorMessage);// Pass the checkoutRequestID to the checkPaymentStatus function
-    } else {
+      
+      } else {
       throw new Error('Failed to initiate STK push');
       
     }
@@ -127,20 +169,20 @@ const navigate = useNavigate();
 
 
 
- useEffect(() => {
+useEffect(() => {
   const sendPaymentDetails = async () => {
     try {
       if (paymentDetails) {
         const { ...restPaymentDetails } = paymentDetails;
-
-        const response = await fetch('https://lets-ride-fe42d9bf40d4.herokuapp.com/api/payments', {
+        const seatsArray = Object.values(restPaymentDetails.seats).flat();
+        const response = await fetch('http://127.0.0.1:3000/api/payments', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             ...restPaymentDetails,
-            seats: restPaymentDetails.seats.join(','),
+            seats: seatsArray.join(''),
           }),
         });
 
@@ -169,89 +211,170 @@ const navigate = useNavigate();
     }
   };
 
-  sendPaymentDetails();
-}, [paymentDetails]);
+  if (!checkoutRequestID) {
+    sendPaymentDetails();
+  }
+}, []);
 
-// Use useEffect to start polling for payment status when checkoutRequestID changes
- useEffect(() => {
-    let intervalId; // Variable to hold the interval ID
 
-    const checkPaymentStatusWithInterval = async () => {
+const generateTicketNumber = () => {
+  const currentDate = new Date();
+  const formattedDate = currentDate.toISOString().replace(/[-T:.Z]/g, '');
+  const randomComponent = Math.floor(Math.random() * 10000);
+  const newTicketNumber = `${formattedDate}-${randomComponent}`;
+  setTicketNumber(newTicketNumber);
+}
+useEffect(() => {
+
+  generateTicketNumber();
+  
+}, []);
+
+useEffect(() => {
+  let intervalId; // Variable to hold the interval ID
+
+  const checkPaymentStatusWithInterval = async () => {
+    try {
+      const queryResponse = await fetch('http://127.0.0.1:3000/api/stkquery', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ checkoutRequestID }),
+      });
+
+      if (queryResponse.ok) {
+        const queryResult = await queryResponse.json();
+        console.log('Query Result:', queryResult);
+
+        if (queryResult.status === 'success' && !isPaymentSuccessful) {
+          const { data } = queryResult;
+          const { ResultCode, ResultDesc } = data;
+
+          if (ResultCode === '0') {
+            setPaymentStatus(ResultDesc); // Payment successful
+            setIsPaymentSuccessful(true); // Set the state to indicate payment success
+          } else if (ResultCode === '1032') {
+            setPaymentStatus(ResultDesc); // Payment successful
+            setIsPaymentSuccessful(true); // Set the state to indicate payment success
+          } else {
+            setPaymentStatus('Payment failed or encountered an error.'); // Other error
+          }
+        } else if (queryResult.status === 'error') {
+          const { data } = queryResult;
+          const { errorMessage } = data;
+
+          setPaymentStatus(errorMessage);
+        } else {
+          // Handle any other unexpected response here
+          setPaymentStatus('Failed to get payment status.');
+        }
+      } else {
+        setPaymentStatus('Failed to check payment status.');
+      }
+    } catch (error) {
+      console.error('Failed to check payment status:', error);
+      setPaymentStatus('Failed to check payment status. Please try again later.');
+    }
+  };
+
+  if (checkoutRequestID && !isPaymentSuccessful) {
+    // Start polling for payment status immediately
+    checkPaymentStatusWithInterval();
+
+    // Start polling every 1 second (1000ms)
+    intervalId = setInterval(checkPaymentStatusWithInterval, 1000);
+  }
+
+  return () => {
+    // Clean up the interval when the component is unmounted or payment is successful
+    clearInterval(intervalId);
+  };
+}, [checkoutRequestID, isPaymentSuccessful]);
+
+useEffect(() => {
+  if (isPaymentSuccessful && !ticketStored) {
+    const formattedTime = time
+      ? new Date(time).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        })
+      : 'N/A';
+
+    const storeTicketAndSeats = async () => {
       try {
-        const queryResponse = await fetch('https://lets-ride-fe42d9bf40d4.herokuapp.com/api/stkquery', {
+        const response = await fetch('http://127.0.0.1:3000/api/tickets', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ checkoutRequestID }),
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            seats: Object.values(paymentDetails.seats).flat().join(''),
+            amount,
+            from,
+            to,
+            date,
+            busId,
+            time: formattedTime,
+            ticket_number: ticketNumber,
+          }),
         });
 
-        if (queryResponse.ok) {
-          const queryResult = await queryResponse.json();
-          console.log('Query Result:', queryResult);
+        if (response.ok) {
+          setTicketStored(true);
+          const data = await response.json();
+          console.log('Ticket stored successfully:', data);
 
-          if (queryResult.status === 'success') {
-            const { data } = queryResult;
-            const { ResultCode, ResultDesc } = data;
+          setBookedSeats((prevBookedSeats) => {
+            const newBookedSeats = { ...prevBookedSeats };
 
-            if (ResultCode === '0' ) {
-              setPaymentStatus(ResultDesc); // Payment successful
-              setIsPaymentSuccessful(true); // Set the state to indicate payment success
-             navigate('/ticket', { state: { paymentDetails,
-            
+            const selectedBusSeatsString = paymentDetails.seats;
+            const selectedBusSeatsArray = selectedBusSeatsString.split(',');
+
+            if (!newBookedSeats[busId]) {
+              newBookedSeats[busId] = [];
+            }
+
+            selectedBusSeatsArray.forEach((seatNumber) => {
+              const trimmedSeatNumber = seatNumber.trim();
+              if (!newBookedSeats[busId].includes(trimmedSeatNumber)) {
+                newBookedSeats[busId].push(trimmedSeatNumber);
+              }
+            });
+
+            console.log('New Booked Seats:', newBookedSeats);
+            storeBookedSeats(busId, newBookedSeats);
+            return newBookedSeats;
+          });
+
+          setSelectedSeats([]);
+          
+          navigate('/ticket', {
+            state: {
+              paymentDetails,
               driverName: location.state.driverName,
               driverPhone: location.state.driverPhone,
               driverNoPlate: location.state.driverNoPlate,
-            } });
-              return; // Payment successful
-            } else if (ResultCode === '1032') {
-              setPaymentStatus(ResultDesc); // Payment successful
-              setIsPaymentSuccessful(true); // Set the state to indicate payment success
-            
-              return; // Payment successful
-            }
-            else {
-              setPaymentStatus('Payment failed or encountered an error.'); // Other error
-            }
-          } else if (queryResult.status === 'error') {
-            const { data } = queryResult;
-            const { errorMessage } = data;
-
-            setPaymentStatus(errorMessage);
-            setErrorMessage(''); // Clear any previous error message
-            setPaymentChecked(true); // Set paymentChecked to true to display the error message
-          } else {
-            // Handle any other unexpected response here
-            setPaymentStatus('Failed to get payment status.');
-            setErrorMessage('Failed to get payment status.'); // Set an error message for the failure to get status
-            setPaymentChecked(true); // Set paymentChecked to true to display the error message
-          }
+              ticketNumber: ticketNumber,
+              employee,
+            },
+          });
         } else {
-          setPaymentStatus('Failed to check payment status.');
-          setErrorMessage('Failed to check payment status.'); // Set an error message for the failure to check status
-          setPaymentChecked(true); // Set paymentChecked to true to display the error message
+          console.error('Error storing ticket:', response.statusText);
         }
       } catch (error) {
-        console.error('Failed to check payment status:', error);
-        setPaymentStatus('Failed to check payment status.');
-        setErrorMessage('Failed to check payment status. Please try again later.');
-        setPaymentChecked(true); // Set paymentChecked to true to display the error message
+        console.error('Error storing ticket:', error);
       }
     };
 
-    if (checkoutRequestID && !isPaymentSuccessful) {
-      // Start polling for payment status immediately
-      checkPaymentStatusWithInterval();
+    storeTicketAndSeats();
+  }
+}, [isPaymentSuccessful, ticketStored]);
 
-      // Start polling every 1 second (1000ms)
-      intervalId = setInterval(checkPaymentStatusWithInterval, 1000);
-    }
-
-    return () => {
-      // Clean up the interval when the component is unmounted or payment is successful
-      clearInterval(intervalId);
-    };
-  }, [checkoutRequestID, isPaymentSuccessful]);
 
 
   
@@ -283,16 +406,20 @@ const navigate = useNavigate();
               <small>{paymentDetails.date}</small>
             </p>
             <p>Departure</p>
-            <p>
-              <small>{paymentDetails.time}hrs</small>
-            </p>
+            <p>Time: {paymentDetails.time ? new Date(paymentDetails.time).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true,
+          }) : 'N/A'}</p>
           </div>
-
+        
           <div>
             <p>One-Way Ticket</p>
-            <p>
-              <small>Selected seat(s) No: {paymentDetails.seats.join(', ')}</small>
-            </p>
+            {/* <p>
+              <small>Booked seat(s) No: {paymentDetails.seats.join(', ')}</small>
+            </p> */}
+            <p>Selected Seats: {(Object.values(paymentDetails.seats).flat().map(seat => seat.toString()) || [])}</p>
+
             <p>
               <strong>Total Ksh{paymentDetails.amount}</strong>
             </p>

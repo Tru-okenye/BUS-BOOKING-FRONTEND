@@ -7,16 +7,18 @@ import { useJsApiLoader } from '@react-google-maps/api';
 import Outbox from './Outbox';
 import {  Link } from 'react-router-dom';
 
+
 const kenyanCounties = [
   'Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Kitale', 'Malindi',
   'Garissa', 'Kakamega', 'Nyeri', 'Meru', 'Lamu', 'Machakos', 'Naivasha', 'Bungoma',
   // Add more counties as needed
 ];
 const libraries = ["places", "geocoding", "geometry"];
-const Booking = () => {
+const Tofro = () => {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [date, setDate] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
+  const [returnDate, setReturnDate] = useState('');
   const [availableBuses, setAvailableBuses] = useState([]);
   const navigate = useNavigate();
   const { alert, showAlert } = useGlobalContext();
@@ -40,37 +42,45 @@ const Booking = () => {
       setTo(value);
     }
   };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!from || !to || !date) {
-      console.log('Please provide the source, destination, and date.');
+    if (!from || !to || !departureDate) {
+      console.log('Please provide the source, destination, and departure date.');
       return;
     }
 
-    // Make an API request to check for available buses
-    fetch(`http://127.0.0.1:3000/api/buses?from=${from}&to=${to}&date=${date}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.length > 0) {
-          setAvailableBuses(data);
-          navigate('/booked', {
-            state: {
-              filteredBuses: data,
-              origin: from,
-              destination: to,
-            },
-          });
-        } else {
-          showAlert(true, 'danger', 'Oh no! We don\'t go there at the moment!');
-          console.log("We don't currently serve those routes.");
-        }
-      })
-      .catch((error) => {
-        console.log('Error checking for available buses:', error);
-      });
+    try {
+      // Make API request for buses from source to destination
+      const response1 = await fetch(`http://127.0.0.1:3000/api/buses?from=${from}&to=${to}&date=${departureDate}`);
+      const data1 = await response1.json();
+
+      // Make API request for buses from destination back to source
+      const response2 = await fetch(`http://127.0.0.1:3000/api/buses?from=${to}&to=${from}&date=${returnDate}`);
+      const data2 = await response2.json();
+
+      if (data1.length > 0 && data2.length > 0) {
+        const combinedBuses = [...data1, ...data2];
+        setAvailableBuses(combinedBuses);
+
+        navigate('/twoway', {
+          state: {
+            outgoingBuses: data1,
+            returningBuses: data2,
+            origin: from,
+            destination: to,
+            departureDate,
+            returnDate,
+          },
+        });
+      } else {
+        showAlert(true, 'danger', "We don't currently serve those routes.");
+      }
+    } catch (error) {
+      console.log('Error checking for available buses:', error);
+    }
   };
+  
 
   return (
     <>
@@ -78,56 +88,71 @@ const Booking = () => {
         <div className='booking'>
           <div>
             <h2>Booking</h2>
-            {/* <button className='btn'>
-              <Link to='/roundtrip' className='js'>ROUNDTRIP</Link> 
-            </button> */}
-  
+        
+
             <form onSubmit={handleSubmit}>
               {alert.show && <Outbox {...alert} removeAlert={showAlert} />}
               <label htmlFor="from">
                 From:
-                <select
+                <input
+                  type="text"
                   id="from"
                   name="from"
                   value={from}
                   onChange={(e) => setFrom(e.target.value)}
-                >
-                  <option value="">Select origin</option>
+                  placeholder="e.g Nairobi"
+                  list="fromList"
+                />
+                <datalist id="fromList">
                   {kenyanCounties.map((county, index) => (
-                    <option key={index} value={county}>{county}</option>
+                    <option key={index} value={county} />
                   ))}
-                </select>
+                </datalist>
               </label>
               <br />
-  
+
               <label htmlFor="to">
                 To:
-                <select
+                <input
+                  type="text"
                   id="to"
                   name="to"
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
-                >
-                  <option value="">Select destination</option>
+                  placeholder="Enter destination"
+                  list="toList"
+                />
+                <datalist id="toList">
                   {kenyanCounties.map((county, index) => (
-                    <option key={index} value={county}>{county}</option>
+                    <option key={index} value={county} />
                   ))}
-                </select>
+                </datalist>
               </label>
               <br />
-  
+
               <label htmlFor="date">
-                Date:
+                Depature Date:
                 <input
-                  type="date"
-                  id="date"
-                  name="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                type="date"
+                id="departureDate"
+                name="departureDate"
+                value={departureDate}
+                onChange={(e) => setDepartureDate(e.target.value)}
                 />
               </label>
               <br />
-  
+              <label htmlFor="date">
+                Return Date:
+                <input
+                type="date"
+                id="returnDate"
+                name="returnDate"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                />
+              </label>
+              <br />
+
               <button type="submit">Search Buses</button>
             </form>
           </div>
@@ -137,10 +162,9 @@ const Booking = () => {
       </div>
     </>
   );
-  
 };
 
-export default Booking;
+export default Tofro;
 
 
 
